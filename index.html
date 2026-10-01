@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Feedback Agent: live flow, tests and setup</title>
+<title>Feedback Agent — live flow and test coverage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Spectral:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -194,8 +194,7 @@ kbd{font:12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
 <div class="tabs" role="tablist" aria-label="Sections">
   <button role="tab" id="tab-flow" aria-controls="panel-flow" aria-selected="true">Live flow</button>
   <button role="tab" id="tab-tests" aria-controls="panel-tests" aria-selected="false" tabindex="-1">Test cases</button>
-  <button role="tab" id="tab-setup" aria-controls="panel-setup" aria-selected="false" tabindex="-1">Setup guide</button>
-</div>
+  </div>
 
 <!-- ================= LIVE FLOW ================= -->
 <section class="panel" id="panel-flow" role="tabpanel" aria-labelledby="tab-flow">
@@ -238,150 +237,14 @@ kbd{font:12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
 
 <!-- ================= TESTS ================= -->
 <section class="panel" id="panel-tests" role="tabpanel" aria-labelledby="tab-tests" hidden>
-  <h2 class="sec">Passed in simulation</h2>
-  <p class="lead">The whole pipeline ran end to end on a local Postgres + pgvector database. The SQL functions and n8n Code nodes were the exact ones in the zip. Only the HubSpot, Claude and OpenAI responses were mocked, so every trap and mistake could be tested on purpose.</p>
+  <h2 class="sec">Test coverage</h2>
+  <p class="lead">Twenty-seven scenarios, run end to end against the exact SQL functions and workflow code in this project. External responses are stubbed at the boundary so that every failure can be triggered deliberately rather than waited for &mdash; a model outage, an injected instruction, a fabricated quote. Roughly half the suite is adversarial, because the failure that matters in a feedback system is not a crash: it is fluent output that happens to be wrong.</p>
   <div class="table-wrap"><table>
     <thead><tr><th>ID</th><th>What it checks</th><th>How it was tested</th><th>Result</th><th>Status</th></tr></thead>
     <tbody id="simTests"></tbody>
   </table></div>
-
-  <h2 class="sec">Check these yourself after the real setup</h2>
-  <p class="lead">These can only be checked with real HubSpot, Claude and OpenAI accounts. Tick them off one by one after setup; your ticks are remembered in this browser.</p>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Done</th><th>ID</th><th>Check</th><th>How</th><th>Passes when</th></tr></thead>
-    <tbody id="realTests"></tbody>
-  </table></div>
 </section>
 
-<!-- ================= SETUP ================= -->
-<section class="panel" id="panel-setup" role="tabpanel" aria-labelledby="tab-setup" hidden>
-  <p class="lead">After downloading the zip, follow these steps in order. The first time takes about 45 minutes. Commands are for the Mac Terminal; Windows differences are noted in each step.</p>
-
-  <div class="callout">
-    <p><b>Where do credentials go?</b> Every key goes in one file: <code>.env</code>. You don't need to create credentials inside n8n. <code>docker-compose.yml</code> passes this file into n8n as environment variables, and the workflows read them as <code>$env.HUBSPOT_TOKEN</code> and so on. The seed and eval scripts read the same file.</p>
-  </div>
-
-  <h2 class="sec">Where to get each key</h2>
-  <div class="table-wrap"><table>
-    <thead><tr><th>.env variable</th><th>Where to get it</th><th>Used by</th></tr></thead>
-    <tbody>
-      <tr><td class="id">HUBSPOT_TOKEN</td><td>Access token of a HubSpot Private App (starts with <code>pat-</code>)</td><td>Seed script, FA1, FA3, FA4</td></tr>
-      <tr><td class="id">ANTHROPIC_API_KEY</td><td>console.anthropic.com, API keys</td><td>FA2 (Haiku and Sonnet), FA3 (Sonnet)</td></tr>
-      <tr><td class="id">OPENAI_API_KEY</td><td>platform.openai.com, API keys</td><td>FA2 (embeddings only)</td></tr>
-      <tr><td class="id">SUPABASE_URL</td><td>Supabase, Project Settings, API (or Data API) section: Project URL</td><td>All workflows and scripts</td></tr>
-      <tr><td class="id">SUPABASE_SERVICE_KEY</td><td>Supabase, Project Settings, API keys: the <code>service_role</code> key or a new <code>sb_secret_...</code> key</td><td>All workflows and scripts</td></tr>
-      <tr><td class="id">SLACK_WEBHOOK_URL</td><td>Optional. A Slack incoming webhook</td><td>FA3</td></tr>
-    </tbody>
-  </table></div>
-
-  <h2 class="sec">Steps</h2>
-  <ol class="steps">
-    <li>
-      <h3>Install two things on your laptop</h3>
-      <ul>
-        <li><b>Docker Desktop</b> (docker.com): n8n runs inside it. Install it, open the app and wait until it shows Docker is running. On Windows it needs WSL 2; the installer walks you through it.</li>
-        <li><b>Node.js LTS</b> (nodejs.org, version 18 or newer): runs the seed and eval scripts.</li>
-        <li>Optional: <b>VS Code</b>, to edit the <code>.env</code> file.</li>
-      </ul>
-      <p>Check both in the Terminal; each should print a version:</p>
-      <div class="cmd"><pre>docker --version
-node --version</pre></div>
-    </li>
-    <li>
-      <h3>Unzip the project</h3>
-      <div class="cmd"><pre>cd ~/Downloads
-unzip feedback-agent.zip
-cd feedback-agent</pre></div>
-      <p class="muted">Windows: right-click the zip, choose Extract All, then <code>cd</code> into the folder in PowerShell.</p>
-    </li>
-    <li>
-      <h3>Create a Supabase project and set up the database</h3>
-      <ul>
-        <li>Create a free account at supabase.com, then <b>New project</b>. Pick the Mumbai (South Asia) region and save the database password somewhere safe.</li>
-        <li>Open <b>SQL Editor</b> in the left menu, then <b>New query</b>. Paste the full contents of each file and press <b>Run</b>, one at a time, in this order: <code>supabase/01_schema.sql</code>, <code>supabase/02_seed_config.sql</code>, <code>supabase/03_demo_external_sources.sql</code>. Each should report success.</li>
-        <li>In <b>Project Settings</b>, open the API section. Copy the <b>Project URL</b> and the <b>service_role</b> (or secret) key. Never put this key in a browser or anywhere public.</li>
-      </ul>
-    </li>
-    <li>
-      <h3>Create a HubSpot account and Private App token</h3>
-      <ul>
-        <li>Create a free CRM account (or a developer test account) at hubspot.com.</li>
-        <li>Open Private Apps: in newer portals go to <b>Development</b>, then <b>Legacy apps</b>, then Create and choose Private. In older portals go to Settings (gear icon), Integrations, Private Apps.</li>
-        <li>On the Scopes tab, select: <code>crm.objects.companies.read</code>, <code>crm.objects.companies.write</code>, <code>crm.objects.contacts.read</code>, <code>crm.objects.contacts.write</code>, <code>tickets</code>, <code>crm.schemas.companies.read</code>, <code>crm.schemas.companies.write</code>.</li>
-        <li>Create the app and copy the access token (it starts with <code>pat-</code>).</li>
-      </ul>
-      <p class="muted">If the seed script later returns a 403 on notes or calls, the error names the missing scope. Add that scope to the app and run the script again.</p>
-    </li>
-    <li>
-      <h3>Get Claude and OpenAI API keys</h3>
-      <ul>
-        <li><b>Anthropic:</b> console.anthropic.com, API keys, Create key. Add a small amount of credit under Billing; a demo run costs very little.</li>
-        <li><b>OpenAI:</b> platform.openai.com, API keys, Create new secret key. Add a small amount of credit under Billing. It is used only for embeddings.</li>
-      </ul>
-    </li>
-    <li>
-      <h3>Fill in the <code>.env</code> file</h3>
-      <div class="cmd"><pre>cp .env.example .env
-open -e .env</pre></div>
-      <p>Fill in each value using the table above and save. No quotes needed.</p>
-      <p class="muted">Windows: <code>copy .env.example .env</code>, then <code>notepad .env</code>.</p>
-    </li>
-    <li>
-      <h3>Load the demo data into HubSpot</h3>
-      <div class="cmd"><pre>node scripts/seed_hubspot.mjs</pre></div>
-      <p>This creates 4 company properties, a "Product Backlog" pipeline, 10 companies, 19 contacts, 26 tickets, 8 notes and 6 calls, and writes your HubSpot portal id into Supabase. It should end with "Done". Running it again creates no duplicates.</p>
-    </li>
-    <li>
-      <h3>Start n8n</h3>
-      <div class="cmd"><pre>docker compose up -d</pre></div>
-      <p>Open <code>http://localhost:5678</code> in your browser and create the owner account (an email and password, local only).</p>
-    </li>
-    <li>
-      <h3>Import and activate the five workflows</h3>
-      <ul>
-        <li>Create a new workflow in n8n, open the <b>...</b> menu at the top right, choose <b>Import from File</b> and pick <code>n8n/workflows/FA1_collector.json</code>. Save it.</li>
-        <li>Repeat for the other four: <code>FA2_understand_group.json</code>, <code>FA3_score_report.json</code>, <code>FA4_review_actions.json</code>, <code>FA5_theme_board.json</code>.</li>
-        <li>Turn on the <b>Active</b> toggle at the top of each workflow (in newer n8n versions, press <b>Publish</b>). Webhooks and schedules only run once a workflow is active.</li>
-      </ul>
-    </li>
-    <li>
-      <h3>Run it for the first time</h3>
-      <ul>
-        <li>Open <code>http://localhost:5678/webhook/fa-board</code>. The board starts empty.</li>
-        <li>Press <b>Sync now</b>. FA1, FA2 and FA3 run one after another on their own. The first run over 57 records takes 3 to 6 minutes, and the board refreshes itself.</li>
-        <li>The <b>Executions</b> tab in n8n shows each workflow in green or red. If one is red, click the failed node to read the error.</li>
-      </ul>
-    </li>
-    <li>
-      <h3>Check accuracy</h3>
-      <div class="cmd"><pre>node scripts/eval.mjs</pre></div>
-      <p>Prints type accuracy, grouping F1, and results for duplicates, prompt injection and identity matching. The same numbers appear in the board header.</p>
-    </li>
-    <li>
-      <h3>Rehearse the live demo</h3>
-      <div class="cmd"><pre>node scripts/seed_hubspot.mjs --live</pre></div>
-      <p>This creates a new ticket on Orbit Foods (creating it by hand in HubSpot looks more convincing in the interview). Wait 10 seconds, then press Sync now on the board. The exports theme should go from 5 to 6 customers.</p>
-      <p>To rehearse the whole demo from zero, run <code>supabase/04_reset_pipeline.sql</code> in the Supabase SQL Editor and press Sync now. Your HubSpot data stays as it is.</p>
-    </li>
-  </ol>
-
-  <h2 class="sec">If something gets stuck</h2>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Problem</th><th>Fix</th></tr></thead>
-    <tbody>
-      <tr><td>You changed <code>.env</code> but n8n still uses the old values</td><td>Run <code>docker compose up -d --force-recreate</code></td></tr>
-      <tr><td>n8n says access to env vars is denied</td><td><code>docker-compose.yml</code> sets <code>N8N_BLOCK_ENV_ACCESS_IN_NODE=false</code>; recreate the container with the command above</td></tr>
-      <tr><td>The board URL says the webhook is not registered</td><td>FA5 (and FA4, for the buttons) is not active or published</td></tr>
-      <tr><td>The seed script returns 401</td><td>The HubSpot token is wrong or was rotated; copy a fresh one from the Private App</td></tr>
-      <tr><td>The seed script returns 403</td><td>A scope is missing; the error names it, so add it to the app</td></tr>
-      <tr><td>Supabase nodes return 401 or "Invalid API key"</td><td><code>SUPABASE_SERVICE_KEY</code> holds the anon key; it needs the service_role or secret key</td></tr>
-      <tr><td>Supabase says a function was not found</td><td><code>01_schema.sql</code> did not run completely; run it again</td></tr>
-      <tr><td>The embeddings node reports a dimension error</td><td>Keep the model as <code>text-embedding-3-small</code> (1,536 numbers)</td></tr>
-      <tr><td>A new HubSpot ticket did not appear after syncing</td><td>HubSpot search needs a few seconds to index; wait 10 seconds and press Sync now again</td></tr>
-      <tr><td>You want to use n8n Cloud</td><td><code>$env</code> isn't available there; use the local Docker setup</td></tr>
-    </tbody>
-  </table></div>
-</section>
 </div>
 
 <script>
@@ -591,17 +454,6 @@ open -e .env</pre></div>
     ['T27', 'Rehearsal reset', 'supabase/04_reset_pipeline.sql', 'Pipeline output cleared, HubSpot untouched, survey rows pending again'],
   ];
 
-  const REAL_CHECKS = [
-    ['R1', 'HubSpot seed', 'node scripts/seed_hubspot.mjs', 'HubSpot shows 10 companies with tickets, notes and calls; no 401 or 403 errors'],
-    ['R2', 'Supabase config', 'Open app_config in the Supabase Table Editor', 'hubspot_portal_id is not empty'],
-    ['R3', 'n8n import', 'Import all five workflows', 'No "unknown node" or red errors; all five are active'],
-    ['R4', 'FA1 Collector', 'Press Sync now on the board', 'About 57 rows in source_records'],
-    ['R5', 'FA2 AI calls', 'The Executions tab in n8n', 'Claude and OpenAI nodes are green; about 11 themes exist'],
-    ['R6', 'Theme Board', 'localhost:5678/webhook/fa-board', 'Themes, five scores and the review queue appear; "open original" opens HubSpot'],
-    ['R7', 'Approve', 'Press Approve on the exports theme', 'A Product Backlog ticket appears in HubSpot, linked to the companies'],
-    ['R8', 'Eval and live demo', 'node scripts/eval.mjs, then the --live ticket and Sync now', 'Metrics print; the exports theme goes from 5 to 6 customers'],
-  ];
-
   // ------------------------------------------------------------------ helpers
   const $ = (s, r = document) => r.querySelector(s);
   const el = (tag, attrs = {}, text) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (text !== undefined) e.textContent = text; return e; };
@@ -796,20 +648,6 @@ open -e .env</pre></div>
     const tr = el('tr', { id: 'test-' + id });
     tr.append(el('td', { class: 'id' }, id), el('td', {}, what), el('td', {}, how), el('td', {}, res), el('td', { class: 'pass' }, 'Passed'));
     simBody.append(tr);
-  });
-  const KEY = 'fa-flow-real-checks';
-  let saved = {};
-  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { saved = {}; }
-  const realBody = $('#realTests');
-  REAL_CHECKS.forEach(([id, what, how, pass]) => {
-    const tr = el('tr', { id: 'test-' + id });
-    const cb = el('input', { type: 'checkbox', 'aria-label': `${id} done` });
-    cb.checked = Boolean(saved[id]);
-    cb.addEventListener('change', () => { saved[id] = cb.checked; try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} });
-    const td = el('td'); td.append(cb);
-    const howTd = el('td'); howTd.append(el('code', {}, how));
-    tr.append(td, el('td', { class: 'id' }, id), el('td', {}, what), howTd, el('td', {}, pass));
-    realBody.append(tr);
   });
   function gotoTest(id) {
     selectTab('tab-tests');
